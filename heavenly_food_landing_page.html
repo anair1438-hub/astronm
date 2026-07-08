@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heavenly Food | Premium Dining Experience</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- AlpineJS for state management (tabs, mobile menu, slider, reservation modal) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            gold: '#D4AF37',      /* Premium Gold */
+                            goldDark: '#AA820A',
+                            charcoal: '#121212',  /* Main Deep Background */
+                            clay: '#1C1C1E',      /* Card Backgrounds */
+                            cream: '#F4EFEA',     /* Light Text/Bg alternative */
+                            muted: '#A1A1AA'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'georgia', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif']
+                    },
+                    animation: {
+                        'fade-in-down': 'fadeInDown 1s ease-out',
+                        'fade-in-up': 'fadeInUp 1s ease-out',
+                        'pulse-slow': 'pulse 3s infinite',
+                    },
+                    keyframes: {
+                        fadeInDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #F4EFEA;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121212;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #AA820A;
+        }
+    </style>
+</head>
+<body x-data="{ mobileMenu: false, activeCategory: 'all', showReservationModal: false, reservationStatus: '' }">
+
+    <!-- Header / Navigation -->
+    <header class="fixed top-0 left-0 w-full z-50 bg-brand-charcoal/90 backdrop-blur-md border-b border-white/5 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20 sm:h-24">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="#" class="flex flex-col">
+                        <span class="font-serif text-2xl sm:text-3xl font-extrabold tracking-widest text-brand-gold uppercase">Heavenly</span>
+                        <span class="text-xs tracking-[0.4em] uppercase text-white/80 font-sans -mt-1 pl-0.5">Food</span>
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="hidden md:flex space-x-8 lg:space-x-12">
+                    <a href="#home" class="text-white hover:text-brand-gold font-medium tracking-wide transition duration-300 text-sm uppercase">Home</a>
+                    <a href="#about" class="text-brand-muted hover:text-brand-gold font-medium tracking-wide transition duration-300 text-sm uppercase">About Us</a>
+                    <a href="#menu" class="text-brand-muted hover:text-brand-gold font-medium tracking-wide transition duration-300 text-sm uppercase">Menu</a>
+                    <a href="#chefs" class="text-brand-muted hover:text-brand-gold font-medium tracking-wide transition duration-300 text-sm uppercase">Chefs</a>
+                    <a href="#testimonials" class="text-brand-muted hover:text-brand-gold font-medium tracking-wide transition duration-300 text-sm uppercase">Reviews</a>
+                    <a href="#location" class="text-brand-muted hover:text-brand-gold font-medium tracking-wide transition duration-300 text-sm uppercase">Contact</a>
+                </nav>
+
+                <!-- Reservation Button (Desktop) -->
+                <div class="hidden md:block">
+                    <button @click="showReservationModal = true" class="px-6 py-3 border border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-charcoal font-bold tracking-wider text-sm uppercase transition-all duration-300 rounded-sm">
+                        Book A Table
+                    </button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button @click="mobileMenu = !mobileMenu" class="text-white focus:outline-none p-2" aria-label="Toggle menu">
+                        <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                            <path :class="{'hidden': mobileMenu, 'inline-flex': !mobileMenu }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            <path :class="{'hidden': !mobileMenu, 'inline-flex': mobileMenu }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer -->
+        <div x-show="mobileMenu" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-4"
+             class="md:hidden bg-brand-charcoal border-b border-white/10 px-4 pt-2 pb-6 space-y-3" style="display: none;">
+            <a href="#home" @click="mobileMenu = false" class="block px-3 py-2 rounded-md text-base font-semibold text-white hover:text-brand-gold hover:bg-white/5 transition">Home</a>
+            <a href="#about" @click="mobileMenu = false" class="block px-3 py-2 rounded-md text-base font-semibold text-brand-muted hover:text-brand-gold hover:bg-white/5 transition">About Us</a>
+            <a href="#menu" @click="mobileMenu = false" class="block px-3 py-2 rounded-md text-base font-semibold text-brand-muted hover:text-brand-gold hover:bg-white/5 transition">Menu</a>
+            <a href="#chefs" @click="mobileMenu = false" class="block px-3 py-2 rounded-md text-base font-semibold text-brand-muted hover:text-brand-gold hover:bg-white/5 transition">Chefs</a>
+            <a href="#testimonials" @click="mobileMenu = false" class="block px-3 py-2 rounded-md text-base font-semibold text-brand-muted hover:text-brand-gold hover:bg-white/5 transition">Reviews</a>
+            <a href="#location" @click="mobileMenu = false" class="block px-3 py-2 rounded-md text-base font-semibold text-brand-muted hover:text-brand-gold hover:bg-white/5 transition">Contact</a>
+            
+            <button @click="showReservationModal = true; mobileMenu = false" class="w-full mt-4 py-3 bg-brand-gold text-brand-charcoal hover:bg-brand-goldDark font-bold tracking-wider text-sm uppercase transition-all duration-300 rounded-sm">
+                Book A Table
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative min-h-screen flex items-center justify-center pt-24 overflow-hidden">
+        <!-- Hero Background Slider/Overlay -->
+        <div class="absolute inset-0 z-0">
+            <!-- Semi-transparent overlay to ensure content readability -->
+            <div class="absolute inset-0 bg-gradient-to-r from-brand-charcoal via-brand-charcoal/80 to-transparent md:to-brand-charcoal/30 z-10"></div>
+            <div class="absolute inset-0 bg-black/60 z-10"></div>
+            <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=1920" 
+                 onerror="this.src='https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=1920'"
+                 alt="Fine dining experience background" 
+                 class="w-full h-full object-cover scale-105 filter blur-[1px]">
+        </div>
+
+        <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left w-full">
+            <div class="max-w-3xl space-y-6 sm:space-y-8">
+                <!-- Subtitle -->
+                <div class="flex items-center space-x-3 animate-fade-in-down">
+                    <span class="w-12 h-[1px] bg-brand-gold"></span>
+                    <span class="text-brand-gold font-semibold uppercase tracking-[0.3em] text-xs sm:text-sm">Heavenly Dining Redefined</span>
+                </div>
+                
+                <!-- Main Title -->
+                <h1 class="text-4xl sm:text-6xl lg:text-7xl font-serif font-bold text-white leading-tight animate-fade-in-up">
+                    Where Every Flavor Tells a <span class="text-brand-gold italic">Celestial</span> Story
+                </h1>
+                
+                <!-- Paragraph -->
+                <p class="text-brand-muted text-base sm:text-xl font-light leading-relaxed max-w-2xl animate-fade-in-up">
+                    Experience craft gastronomy made from locally sourced organic ingredients, curated by Michelin-star culinary visionaries. Indulge your senses in our modern sanctuary.
+                </p>
+
+                <!-- CTAs -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-4 animate-fade-in-up">
+                    <button @click="showReservationModal = true" class="px-8 py-4 bg-brand-gold hover:bg-brand-goldDark text-brand-charcoal font-bold tracking-widest text-sm uppercase transition-all duration-300 rounded-sm shadow-lg shadow-brand-gold/10">
+                        Reserve Your Table
+                    </button>
+                    <a href="#menu" class="px-8 py-4 border border-white/20 hover:border-brand-gold text-white hover:text-brand-gold font-bold tracking-widest text-sm uppercase transition-all duration-300 rounded-sm text-center">
+                        Explore Our Menu
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Info Footer for Hero -->
+        <div class="absolute bottom-0 left-0 w-full z-20 bg-gradient-to-t from-brand-charcoal to-transparent py-8 hidden lg:block">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-3 gap-8 border-t border-white/10 pt-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-brand-gold text-2xl"><i class="fa-solid fa-clock"></i></div>
+                        <div>
+                            <h4 class="text-white font-semibold text-sm">Opening Hours</h4>
+                            <p class="text-xs text-brand-muted">Daily: 11:00 AM - 11:00 PM</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-brand-gold text-2xl"><i class="fa-solid fa-location-dot"></i></div>
+                        <div>
+                            <h4 class="text-white font-semibold text-sm">Our Location</h4>
+                            <p class="text-xs text-brand-muted">777 Heavenly Path, Culinary Heights</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-brand-gold text-2xl"><i class="fa-solid fa-phone"></i></div>
+                        <div>
+                            <h4 class="text-white font-semibold text-sm">Reservations</h4>
+                            <p class="text-xs text-brand-muted">+1 (555) 777-FOOD</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-24 bg-brand-charcoal border-b border-white/5 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <!-- Left Side: Overlapping Images (Premium look) -->
+                <div class="relative h-[480px] sm:h-[600px]">
+                    <!-- Main Large Image -->
+                    <div class="absolute left-0 top-0 w-[80%] h-[80%] rounded shadow-2xl overflow-hidden border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&q=80&w=800" 
+                             onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800'"
+                             alt="Chef plating fine dining dish" 
+                             class="w-full h-full object-cover transition-transform duration-700 hover:scale-105">
+                    </div>
+                    <!-- Secondary Overlapping Image -->
+                    <div class="absolute right-0 bottom-0 w-[55%] h-[55%] rounded shadow-2xl overflow-hidden border-4 border-brand-charcoal">
+                        <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=600" 
+                             onerror="this.src='https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&q=80&w=600'"
+                             alt="Exquisite craft cocktails" 
+                             class="w-full h-full object-cover transition-transform duration-700 hover:scale-105">
+                    </div>
+                    <!-- Small Gold Accent Badge -->
+                    <div class="absolute left-6 bottom-12 bg-brand-gold text-brand-charcoal p-6 rounded shadow-xl hidden sm:block">
+                        <p class="font-serif text-3xl font-bold">12+</p>
+                        <p class="text-xs uppercase tracking-wider font-semibold">Years of Perfection</p>
+                    </div>
+                </div>
+
+                <!-- Right Side: Content -->
+                <div class="space-y-6 sm:space-y-8">
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-8 h-[1px] bg-brand-gold"></span>
+                            <span class="text-brand-gold font-semibold uppercase tracking-widest text-xs">Our Heritage</span>
+                        </div>
+                        <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white leading-tight">
+                            Crafting Moments of Pure Culinary Bliss
+                        </h2>
+                    </div>
+
+                    <p class="text-brand-muted leading-relaxed font-light">
+                        Founded in 2014, Heavenly Food began with a simple but radical aspiration: to create a transcendental dining experience where gourmet precision meets cozy, soulful hospitality.
+                    </p>
+
+                    <p class="text-brand-muted leading-relaxed font-light">
+                        We source our produce exclusively from regenerative, organic family farms. Our award-winning kitchen designs seasonal culinary journeys that are as beautiful to behold as they are magnificent to taste.
+                    </p>
+
+                    <!-- Key highlights list -->
+                    <div class="grid grid-cols-2 gap-6 pt-4">
+                        <div class="flex items-start space-x-3">
+                            <span class="text-brand-gold mt-1"><i class="fa-solid fa-leaf"></i></span>
+                            <div>
+                                <h4 class="text-white font-semibold">100% Organic</h4>
+                                <p class="text-xs text-brand-muted">Directly from earth to table</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="text-brand-gold mt-1"><i class="fa-solid fa-award"></i></span>
+                            <div>
+                                <h4 class="text-white font-semibold">Michelin Stars</h4>
+                                <p class="text-xs text-brand-muted">Crafted by legendary chefs</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="text-brand-gold mt-1"><i class="fa-solid fa-champagne-glasses"></i></span>
+                            <div>
+                                <h4 class="text-white font-semibold">Perfect Ambiance</h4>
+                                <p class="text-xs text-brand-muted">Romantic, cozy luxury</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="text-brand-gold mt-1"><i class="fa-solid fa-heart"></i></span>
+                            <div>
+                                <h4 class="text-white font-semibold">Warm Hospitality</h4>
+                                <p class="text-xs text-brand-muted">Unrivaled customer service</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6">
+                        <button @click="showReservationModal = true" class="px-8 py-4 bg-transparent border border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-charcoal font-bold tracking-widest text-xs uppercase transition-all duration-300 rounded-sm">
+                            Discover Our Story
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Menu Section with Filters -->
+    <section id="menu" class="py-24 bg-brand-clay/50 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="text-center max-w-2xl mx-auto space-y-4 mb-16">
+                <div class="flex items-center justify-center space-x-2">
+                    <span class="w-8 h-[1px] bg-brand-gold"></span>
+                    <span class="text-brand-gold font-semibold uppercase tracking-widest text-xs">Chef's Selection</span>
+                    <span class="w-8 h-[1px] bg-brand-gold"></span>
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white">Our Celestial Menu</h2>
+                <p class="text-brand-muted font-light text-sm sm:text-base">
+                    Browse our handcrafted seasonal selection of starters, signature mains, exquisite desserts, and masterfully paired beverages.
+                </p>
+            </div>
+
+            <!-- Tab Categories Grid -->
+            <div class="flex flex-wrap justify-center gap-2 mb-12 sm:mb-16">
+                <button @click="activeCategory = 'all'" 
+                        :class="activeCategory === 'all' ? 'bg-brand-gold text-brand-charcoal font-semibold' : 'bg-brand-charcoal text-white hover:bg-brand-gold/10'" 
+                        class="px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase transition-all duration-300">
+                    All Dishes
+                </button>
+                <button @click="activeCategory = 'starters'" 
+                        :class="activeCategory === 'starters' ? 'bg-brand-gold text-brand-charcoal font-semibold' : 'bg-brand-charcoal text-white hover:bg-brand-gold/10'" 
+                        class="px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase transition-all duration-300">
+                    Starters
+                </button>
+                <button @click="activeCategory = 'mains'" 
+                        :class="activeCategory === 'mains' ? 'bg-brand-gold text-brand-charcoal font-semibold' : 'bg-brand-charcoal text-white hover:bg-brand-gold/10'" 
+                        class="px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase transition-all duration-300">
+                    Mains
+                </button>
+                <button @click="activeCategory = 'desserts'" 
+                        :class="activeCategory === 'desserts' ? 'bg-brand-gold text-brand-charcoal font-semibold' : 'bg-brand-charcoal text-white hover:bg-brand-gold/10'" 
+                        class="px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase transition-all duration-300">
+                    Desserts
+                </button>
+                <button @click="activeCategory = 'drinks'" 
+                        :class="activeCategory === 'drinks' ? 'bg-brand-gold text-brand-charcoal font-semibold' : 'bg-brand-charcoal text-white hover:bg-brand-gold/10'" 
+                        class="px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase transition-all duration-300">
+                    Cocktails & Wine
+                </button>
+            </div>
+
+            <!-- Menu Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+                
+                <!-- Item 1 (Starter) -->
+                <div x-show="activeCategory === 'all' || activeCategory === 'starters'"
+                     class="group flex flex-col sm:flex-row gap-6 p-6 rounded-lg bg-brand-charcoal/40 border border-white/5 transition-all duration-300 hover:border-brand-gold/20 hover:bg-brand-charcoal/80"
+                     style="display: flex;">
+                    <div class="w-full sm:w-28 h-28 shrink-0 overflow-hidden rounded-md border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=250" 
+                             onerror="this.src='https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=250'"
+                             alt="Crispy Truffle Burrata" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <h3 class="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-brand-gold transition duration-300">Crispy Truffle Burrata</h3>
+                                <span class="text-brand-gold font-bold font-serif text-lg">$18.00</span>
+                            </div>
+                            <p class="text-sm text-brand-muted font-light leading-relaxed">
+                                Italian burrata coated in gold breadcrumbs, served with heirloom tomato confit, fresh microgreens, and liquid black truffle.
+                            </p>
+                        </div>
+                        <div class="mt-4 flex gap-2">
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-brand-gold/10 text-brand-gold rounded">Vegetarian</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-white/5 text-brand-muted rounded">Signature</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 2 (Starter) -->
+                <div x-show="activeCategory === 'all' || activeCategory === 'starters'"
+                     class="group flex flex-col sm:flex-row gap-6 p-6 rounded-lg bg-brand-charcoal/40 border border-white/5 transition-all duration-300 hover:border-brand-gold/20 hover:bg-brand-charcoal/80"
+                     style="display: flex;">
+                    <div class="w-full sm:w-28 h-28 shrink-0 overflow-hidden rounded-md border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=250" 
+                             onerror="this.src='https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&q=80&w=250'"
+                             alt="Pan Seared Diver Scallops" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <h3 class="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-brand-gold transition duration-300">Pan Seared Scallops</h3>
+                                <span class="text-brand-gold font-bold font-serif text-lg">$24.00</span>
+                            </div>
+                            <p class="text-sm text-brand-muted font-light leading-relaxed">
+                                Jumbo Diver scallops, creamy parsnip puree, crispy pancetta crumbles, lemon verbena foam, and roasted pumpkin seeds.
+                            </p>
+                        </div>
+                        <div class="mt-4 flex gap-2">
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-brand-gold/10 text-brand-gold rounded">Gluten Free</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 3 (Main) -->
+                <div x-show="activeCategory === 'all' || activeCategory === 'mains'"
+                     class="group flex flex-col sm:flex-row gap-6 p-6 rounded-lg bg-brand-charcoal/40 border border-white/5 transition-all duration-300 hover:border-brand-gold/20 hover:bg-brand-charcoal/80"
+                     style="display: flex;">
+                    <div class="w-full sm:w-28 h-28 shrink-0 overflow-hidden rounded-md border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=250" 
+                             onerror="this.src='https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&q=80&w=250'"
+                             alt="Celestial Wagyu Ribeye" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <h3 class="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-brand-gold transition duration-300">A5 Wagyu Ribeye</h3>
+                                <span class="text-brand-gold font-bold font-serif text-lg">$95.00</span>
+                            </div>
+                            <p class="text-sm text-brand-muted font-light leading-relaxed">
+                                Authentic Japanese Wagyu, wood-fired with rosemary salt, garlic bone-marrow butter, served alongside seasonal micro-carrots.
+                            </p>
+                        </div>
+                        <div class="mt-4 flex gap-2">
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-brand-gold/10 text-brand-gold rounded">Best Seller</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 4 (Main) -->
+                <div x-show="activeCategory === 'all' || activeCategory === 'mains'"
+                     class="group flex flex-col sm:flex-row gap-6 p-6 rounded-lg bg-brand-charcoal/40 border border-white/5 transition-all duration-300 hover:border-brand-gold/20 hover:bg-brand-charcoal/80"
+                     style="display: flex;">
+                    <div class="w-full sm:w-28 h-28 shrink-0 overflow-hidden rounded-md border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&q=80&w=250" 
+                             onerror="this.src='https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&q=80&w=250'"
+                             alt="Crispy Skin Ora King Salmon" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <h3 class="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-brand-gold transition duration-300">Ora King Salmon</h3>
+                                <span class="text-brand-gold font-bold font-serif text-lg">$42.00</span>
+                            </div>
+                            <p class="text-sm text-brand-muted font-light leading-relaxed">
+                                Seared wild salmon, saffron-infused risotto, asparagus ribbons, lemongrass reduction, and delicate dill pearls.
+                            </p>
+                        </div>
+                        <div class="mt-4 flex gap-2">
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-brand-gold/10 text-brand-gold rounded">Gluten Free</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 5 (Dessert) -->
+                <div x-show="activeCategory === 'all' || activeCategory === 'desserts'"
+                     class="group flex flex-col sm:flex-row gap-6 p-6 rounded-lg bg-brand-charcoal/40 border border-white/5 transition-all duration-300 hover:border-brand-gold/20 hover:bg-brand-charcoal/80"
+                     style="display: flex;">
+                    <div class="w-full sm:w-28 h-28 shrink-0 overflow-hidden rounded-md border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80&w=250" 
+                             onerror="this.src='https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=250'"
+                             alt="Golden Heavenly Soufflé" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <h3 class="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-brand-gold transition duration-300">Golden Soufflé</h3>
+                                <span class="text-brand-gold font-bold font-serif text-lg">$16.00</span>
+                            </div>
+                            <p class="text-sm text-brand-muted font-light leading-relaxed">
+                                Light Madagascar vanilla bean soufflé, garnished with 24-karat edible gold leaf flakes, alongside a warm dark chocolate drizzle.
+                            </p>
+                        </div>
+                        <div class="mt-4 flex gap-2">
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-brand-gold/10 text-brand-gold rounded">Vegetarian</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 6 (Dessert) -->
+                <div x-show="activeCategory === 'all' || activeCategory === 'desserts'"
+                     class="group flex flex-col sm:flex-row gap-6 p-6 rounded-lg bg-brand-charcoal/40 border border-white/5 transition-all duration-300 hover:border-brand-gold/20 hover:bg-brand-charcoal/80"
+                     style="display: flex;">
+                    <div class="w-full sm:w-28 h-28 shrink-0 overflow-hidden rounded-md border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&q=80&w=250" 
+                             onerror="this.src='https://images.unsplash.com/photo-1511018556340-d16986a1c194?auto=format&fit=crop&q=80&w=250'"
+                             alt="Matcha Pistachio Dome" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <h3 class="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-brand-gold transition duration-300">Matcha Pistachio Dome</h3>
+                                <span class="text-brand-gold font-bold font-serif text-lg">$15.00</span>
+                            </div>
+                            <p class="text-sm text-brand-muted font-light leading-relaxed">
+                                Uji matcha velvet mousse dome, pistachio praline center, almond sponge, served with sweet house raspberry coulis.
+                            </p>
+                        </div>
+                        <div class="mt-4 flex gap-2">
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-brand-gold/10 text-brand-gold rounded">Signature</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 7 (Drinks) -->
+                <div x-show="activeCategory === 'all' || activeCategory === 'drinks'"
+                     class="group flex flex-col sm:flex-row gap-6 p-6 rounded-lg bg-brand-charcoal/40 border border-white/5 transition-all duration-300 hover:border-brand-gold/20 hover:bg-brand-charcoal/80"
+                     style="display: flex;">
+                    <div class="w-full sm:w-28 h-28 shrink-0 overflow-hidden rounded-md border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=250" 
+                             onerror="this.src='https://images.unsplash.com/photo-1536935338788-846bb9981813?auto=format&fit=crop&q=80&w=250'"
+                             alt="The Heavenly Elixir" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <h3 class="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-brand-gold transition duration-300">The Heavenly Elixir</h3>
+                                <span class="text-brand-gold font-bold font-serif text-lg">$20.00</span>
+                            </div>
+                            <p class="text-sm text-brand-muted font-light leading-relaxed">
+                                Rare Mezcal infused with lavender essence, honey syrup, freshly squeezed lime, and smoked table-side with rosemary wood-chips.
+                            </p>
+                        </div>
+                        <div class="mt-4 flex gap-2">
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-brand-gold/10 text-brand-gold rounded">Artisanal</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 8 (Drinks) -->
+                <div x-show="activeCategory === 'all' || activeCategory === 'drinks'"
+                     class="group flex flex-col sm:flex-row gap-6 p-6 rounded-lg bg-brand-charcoal/40 border border-white/5 transition-all duration-300 hover:border-brand-gold/20 hover:bg-brand-charcoal/80"
+                     style="display: flex;">
+                    <div class="w-full sm:w-28 h-28 shrink-0 overflow-hidden rounded-md border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&q=80&w=250" 
+                             onerror="this.src='https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&q=80&w=250'"
+                             alt="Reserve Cabernet Sauvignon" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <h3 class="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-brand-gold transition duration-300">Reserve Napa Cabernet</h3>
+                                <span class="text-brand-gold font-bold font-serif text-lg">$28.00 / glass</span>
+                            </div>
+                            <p class="text-sm text-brand-muted font-light leading-relaxed">
+                                Decanted private reserve red, deep notes of blackberry, vanilla oak, and long, velvety-smooth spice finish.
+                            </p>
+                        </div>
+                        <div class="mt-4 flex gap-2">
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-brand-gold/10 text-brand-gold rounded">Private Reserve</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Note -->
+            <div class="text-center mt-12">
+                <p class="text-xs sm:text-sm text-brand-muted italic">
+                    * Please notify your server of any food allergies or dietary restrictions before ordering.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chef Highlights Section -->
+    <section id="chefs" class="py-24 bg-brand-charcoal border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="text-center max-w-2xl mx-auto space-y-4 mb-16">
+                <div class="flex items-center justify-center space-x-2">
+                    <span class="w-8 h-[1px] bg-brand-gold"></span>
+                    <span class="text-brand-gold font-semibold uppercase tracking-widest text-xs">Culinary Masters</span>
+                    <span class="w-8 h-[1px] bg-brand-gold"></span>
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white">Meet the Visionaries</h2>
+                <p class="text-brand-muted font-light text-sm sm:text-base">
+                    Our kitchens are led by culinary artisans dedicated to pushing the boundaries of taste, visual art, and sensory experience.
+                </p>
+            </div>
+
+            <!-- Chefs Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Chef 1 -->
+                <div class="group relative rounded-xl overflow-hidden border border-white/5 bg-brand-clay/30 hover:border-brand-gold/30 transition-all duration-300">
+                    <div class="aspect-[4/5] overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&q=80&w=600" 
+                             onerror="this.src='https://images.unsplash.com/photo-1581090700227-136177be8017?auto=format&fit=crop&q=80&w=600'"
+                             alt="Executive Chef Christian Blanc" 
+                             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-95 group-hover:brightness-100">
+                    </div>
+                    <div class="p-6 text-center">
+                        <span class="text-xs font-bold uppercase tracking-widest text-brand-gold">Executive Chef</span>
+                        <h3 class="font-serif text-xl font-bold text-white mt-1">Christian Blanc</h3>
+                        <p class="text-xs text-brand-muted mt-2 font-light">
+                            With over 18 years in legendary European kitchens, Chef Christian believes food is a sensory communion with nature.
+                        </p>
+                        <!-- Socials -->
+                        <div class="flex justify-center space-x-4 mt-4 text-brand-muted group-hover:text-brand-gold transition-colors duration-300">
+                            <a href="#" class="hover:text-white transition"><i class="fa-brands fa-instagram"></i></a>
+                            <a href="#" class="hover:text-white transition"><i class="fa-brands fa-linkedin"></i></a>
+                            <a href="#" class="hover:text-white transition"><i class="fa-brands fa-x-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chef 2 -->
+                <div class="group relative rounded-xl overflow-hidden border border-white/5 bg-brand-clay/30 hover:border-brand-gold/30 transition-all duration-300">
+                    <div class="aspect-[4/5] overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1581090464762-642151754a43?auto=format&fit=crop&q=80&w=600" 
+                             onerror="this.src='https://images.unsplash.com/photo-1566616213894-2d4e1baee5d8?auto=format&fit=crop&q=80&w=600'"
+                             alt="Chef de Cuisine Elena Petrova" 
+                             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-95 group-hover:brightness-100">
+                    </div>
+                    <div class="p-6 text-center">
+                        <span class="text-xs font-bold uppercase tracking-widest text-brand-gold">Chef de Cuisine</span>
+                        <h3 class="font-serif text-xl font-bold text-white mt-1">Elena Petrova</h3>
+                        <p class="text-xs text-brand-muted mt-2 font-light">
+                            Elena champions molecular cuisine, infusing modern physical and chemical transformations into comforting heirloom recipes.
+                        </p>
+                        <!-- Socials -->
+                        <div class="flex justify-center space-x-4 mt-4 text-brand-muted group-hover:text-brand-gold transition-colors duration-300">
+                            <a href="#" class="hover:text-white transition"><i class="fa-brands fa-instagram"></i></a>
+                            <a href="#" class="hover:text-white transition"><i class="fa-brands fa-linkedin"></i></a>
+                            <a href="#" class="hover:text-white transition"><i class="fa-brands fa-x-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chef 3 -->
+                <div class="group relative rounded-xl overflow-hidden border border-white/5 bg-brand-clay/30 hover:border-brand-gold/30 transition-all duration-300">
+                    <div class="aspect-[4/5] overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=600" 
+                             onerror="this.src='https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&q=80&w=600'"
+                             alt="Master Pastry Chef Marcus Aurelius" 
+                             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-95 group-hover:brightness-100">
+                    </div>
+                    <div class="p-6 text-center">
+                        <span class="text-xs font-bold uppercase tracking-widest text-brand-gold">Master Pastry Chef</span>
+                        <h3 class="font-serif text-xl font-bold text-white mt-1">Marcus Aurelius</h3>
+                        <p class="text-xs text-brand-muted mt-2 font-light">
+                            Marcus converts desserts into visual sculpting exhibits. His gold-spun confectionery designs are beloved worldwide.
+                        </p>
+                        <!-- Socials -->
+                        <div class="flex justify-center space-x-4 mt-4 text-brand-muted group-hover:text-brand-gold transition-colors duration-300">
+                            <a href="#" class="hover:text-white transition"><i class="fa-brands fa-instagram"></i></a>
+                            <a href="#" class="hover:text-white transition"><i class="fa-brands fa-linkedin"></i></a>
+                            <a href="#" class="hover:text-white transition"><i class="fa-brands fa-x-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section with Carousel/Slider -->
+    <section id="testimonials" class="py-24 bg-brand-clay/30 relative overflow-hidden" x-data="{ activeSlide: 0, totalSlides: 3 }">
+        <!-- Subtle gold background light -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-gold/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <!-- Header -->
+            <div class="text-center space-y-4 mb-12 sm:mb-16">
+                <div class="flex items-center justify-center space-x-2">
+                    <span class="w-8 h-[1px] bg-brand-gold"></span>
+                    <span class="text-brand-gold font-semibold uppercase tracking-widest text-xs">Customer Reviews</span>
+                    <span class="w-8 h-[1px] bg-brand-gold"></span>
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white">What Culinary Lovers Say</h2>
+            </div>
+
+            <!-- Testimonial Slider Container -->
+            <div class="relative overflow-hidden min-h-[300px]">
+                
+                <!-- Slide 1 -->
+                <div x-show="activeSlide === 0" 
+                     x-transition:enter="transition ease-out duration-500 transform"
+                     x-transition:enter-start="opacity-0 translate-x-12"
+                     x-transition:enter-end="opacity-100 translate-x-0"
+                     x-transition:leave="transition ease-in duration-300 transform absolute"
+                     x-transition:leave-start="opacity-100 translate-x-0"
+                     x-transition:leave-end="opacity-0 -translate-x-12"
+                     class="text-center space-y-6">
+                    <div class="flex justify-center text-brand-gold text-lg space-x-1">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="font-serif text-xl sm:text-2xl italic text-white/90 leading-relaxed max-w-2xl mx-auto">
+                        "An absolutely transcendent culinary masterpiece! The Wagyu melted on my tongue like butter and the truffle burrata starter was sublime. Heavenly Food has elevated our city's culinary landscape."
+                    </p>
+                    <div class="flex items-center justify-center space-x-3 mt-6">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" 
+                             alt="Sophia Lorenz" 
+                             class="w-12 h-12 rounded-full border border-brand-gold object-cover">
+                        <div class="text-left">
+                            <h4 class="text-white font-semibold text-sm">Sophia Lorenz</h4>
+                            <p class="text-brand-gold text-xs">Aesthetic food critic & gourmet blogger</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div x-show="activeSlide === 1" 
+                     x-transition:enter="transition ease-out duration-500 transform"
+                     x-transition:enter-start="opacity-0 translate-x-12"
+                     x-transition:enter-end="opacity-100 translate-x-0"
+                     x-transition:leave="transition ease-in duration-300 transform absolute"
+                     x-transition:leave-start="opacity-100 translate-x-0"
+                     x-transition:leave-end="opacity-0 -translate-x-12"
+                     class="text-center space-y-6"
+                     style="display: none;">
+                    <div class="flex justify-center text-brand-gold text-lg space-x-1">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="font-serif text-xl sm:text-2xl italic text-white/90 leading-relaxed max-w-2xl mx-auto">
+                        "Unrivaled atmosphere. The private dining room was exceptionally private, and the cocktail pairing program is second to none. The Lavender-smoke Mezcal was incredible."
+                    </p>
+                    <div class="flex items-center justify-center space-x-3 mt-6">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150" 
+                             alt="Marcus Sterling" 
+                             class="w-12 h-12 rounded-full border border-brand-gold object-cover">
+                        <div class="text-left">
+                            <h4 class="text-white font-semibold text-sm">Marcus Sterling</h4>
+                            <p class="text-brand-gold text-xs">Venture Capitalist / Sommelier enthusiast</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div x-show="activeSlide === 2" 
+                     x-transition:enter="transition ease-out duration-500 transform"
+                     x-transition:enter-start="opacity-0 translate-x-12"
+                     x-transition:enter-end="opacity-100 translate-x-0"
+                     x-transition:leave="transition ease-in duration-300 transform absolute"
+                     x-transition:leave-start="opacity-100 translate-x-0"
+                     x-transition:leave-end="opacity-0 -translate-x-12"
+                     class="text-center space-y-6"
+                     style="display: none;">
+                    <div class="flex justify-center text-brand-gold text-lg space-x-1">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="font-serif text-xl sm:text-2xl italic text-white/90 leading-relaxed max-w-2xl mx-auto">
+                        "The dessert presentation had my table fully spellbound. It is genuine, award-winning artistry on a plate. The staff operates with synchronized, telepathic grace."
+                    </p>
+                    <div class="flex items-center justify-center space-x-3 mt-6">
+                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150" 
+                             alt="Clara Dupont" 
+                             class="w-12 h-12 rounded-full border border-brand-gold object-cover">
+                        <div class="text-left">
+                            <h4 class="text-white font-semibold text-sm">Clara Dupont</h4>
+                            <p class="text-brand-gold text-xs">Design Director</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Slider Dots navigation -->
+            <div class="flex justify-center space-x-3 mt-8">
+                <template x-for="i in Array.from({ length: totalSlides }).map((_, idx) => idx)">
+                    <button @click="activeSlide = i" 
+                            :class="activeSlide === i ? 'bg-brand-gold w-8' : 'bg-brand-muted/30 w-2.5'" 
+                            class="h-2.5 rounded-full transition-all duration-300 hover:bg-brand-gold/50" 
+                            aria-label="Go to slide"></button>
+                </template>
+            </div>
+        </div>
+    </section>
+
+    <!-- Location, Hours & Map Section -->
+    <section id="location" class="py-24 bg-brand-charcoal border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-stretch">
+                <!-- Left Column: Location Details & Hours -->
+                <div class="space-y-8 flex flex-col justify-between">
+                    <div class="space-y-6">
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-8 h-[1px] bg-brand-gold"></span>
+                                <span class="text-brand-gold font-semibold uppercase tracking-widest text-xs font-sans">Visit Us</span>
+                            </div>
+                            <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white">Find Our Sanctuary</h2>
+                        </div>
+                        <p class="text-brand-muted font-light leading-relaxed">
+                            Nestled in the heart of Culinary Heights, Heavenly Food is easily accessible with convenient, complimentary valet parking available for all reservation guests.
+                        </p>
+                    </div>
+
+                    <!-- Details Card -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 bg-brand-clay/50 border border-white/5 p-8 rounded-lg">
+                        <div class="space-y-4">
+                            <h3 class="font-serif text-xl font-bold text-brand-gold">Operating Hours</h3>
+                            <ul class="text-sm space-y-2 text-brand-muted">
+                                <li class="flex justify-between border-b border-white/5 pb-1">
+                                    <span>Mon - Thu:</span>
+                                    <span class="text-white font-medium">11 AM - 10 PM</span>
+                                </li>
+                                <li class="flex justify-between border-b border-white/5 pb-1">
+                                    <span>Fri - Sat:</span>
+                                    <span class="text-white font-medium">11 AM - 12 AM</span>
+                                </li>
+                                <li class="flex justify-between">
+                                    <span>Sunday:</span>
+                                    <span class="text-white font-medium">10 AM - 10 PM</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="space-y-4">
+                            <h3 class="font-serif text-xl font-bold text-brand-gold">Contact Info</h3>
+                            <p class="text-sm text-brand-muted flex items-start space-x-2">
+                                <i class="fa-solid fa-location-dot mt-1 text-brand-gold"></i>
+                                <span>777 Heavenly Path,<br>Culinary Heights, NY 10001</span>
+                            </p>
+                            <p class="text-sm text-brand-muted flex items-center space-x-2">
+                                <i class="fa-solid fa-phone text-brand-gold"></i>
+                                <span>+1 (555) 777-FOOD</span>
+                            </p>
+                            <p class="text-sm text-brand-muted flex items-center space-x-2">
+                                <i class="fa-solid fa-envelope text-brand-gold"></i>
+                                <span>dine@heavenlyfood.com</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button @click="showReservationModal = true" class="w-full sm:w-auto px-8 py-4 bg-brand-gold hover:bg-brand-goldDark text-brand-charcoal font-bold tracking-widest text-sm uppercase transition-all duration-300 rounded-sm">
+                            Schedule A Private Event
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Simulated Interactive Premium Map -->
+                <div class="relative min-h-[350px] lg:min-h-full rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-brand-clay">
+                    <!-- Leaflet / Google Map Simulation with premium Dark Palette -->
+                    <div class="absolute inset-0 z-0 bg-[#121212] flex flex-col justify-center items-center p-6 text-center">
+                        <!-- Premium abstract map grid vector look or fallback styling -->
+                        <div class="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#d4af37_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                        
+                        <!-- Map Marker Anchor -->
+                        <div class="z-10 flex flex-col items-center space-y-4 animate-pulse-slow">
+                            <div class="w-16 h-16 rounded-full bg-brand-gold/10 border-2 border-brand-gold flex items-center justify-center shadow-lg shadow-brand-gold/25">
+                                <span class="text-brand-gold text-2xl"><i class="fa-solid fa-utensils"></i></span>
+                            </div>
+                            <div>
+                                <h4 class="font-serif text-lg font-bold text-white">HEAVENLY FOOD</h4>
+                                <p class="text-xs text-brand-gold font-medium uppercase tracking-widest mt-1">777 Heavenly Path, NY 10001</p>
+                            </div>
+                        </div>
+
+                        <!-- Mini map overlay UI controls for authenticity -->
+                        <div class="absolute bottom-4 left-4 right-4 bg-brand-charcoal/90 border border-white/10 px-4 py-3 rounded text-left text-xs flex justify-between items-center">
+                            <div>
+                                <span class="text-white font-bold block">Complimentary Valet Active</span>
+                                <span class="text-brand-muted text-[10px]">Simply present reservation email to parking crew.</span>
+                            </div>
+                            <button class="bg-brand-gold hover:bg-brand-goldDark text-brand-charcoal px-3 py-1.5 font-bold uppercase rounded-sm text-[10px] transition duration-300">
+                                Get Directions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-brand-charcoal border-t border-white/5 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <!-- Branding Column -->
+                <div class="space-y-4 md:col-span-1">
+                    <a href="#" class="flex flex-col">
+                        <span class="font-serif text-2xl font-extrabold tracking-widest text-brand-gold uppercase">Heavenly</span>
+                        <span class="text-xs tracking-[0.4em] uppercase text-white/80 font-sans -mt-1 pl-0.5">Food</span>
+                    </a>
+                    <p class="text-xs text-brand-muted leading-relaxed font-light">
+                        Where celestial ingredients meet masterful modern art, rendering your dining moments divine.
+                    </p>
+                    <!-- Social Icons -->
+                    <div class="flex space-x-4 pt-2">
+                        <a href="#" class="w-8 h-8 rounded-full border border-white/10 hover:border-brand-gold text-white hover:text-brand-gold flex items-center justify-center transition-all duration-300"><i class="fa-brands fa-facebook-f text-xs"></i></a>
+                        <a href="#" class="w-8 h-8 rounded-full border border-white/10 hover:border-brand-gold text-white hover:text-brand-gold flex items-center justify-center transition-all duration-300"><i class="fa-brands fa-instagram text-xs"></i></a>
+                        <a href="#" class="w-8 h-8 rounded-full border border-white/10 hover:border-brand-gold text-white hover:text-brand-gold flex items-center justify-center transition-all duration-300"><i class="fa-brands fa-x-twitter text-xs"></i></a>
+                        <a href="#" class="w-8 h-8 rounded-full border border-white/10 hover:border-brand-gold text-white hover:text-brand-gold flex items-center justify-center transition-all duration-300"><i class="fa-brands fa-pinterest text-xs"></i></a>
+                    </div>
+                </div>
+
+                <!-- Fast Links -->
+                <div class="space-y-4">
+                    <h4 class="font-serif text-base font-bold text-white tracking-wider">Quick Links</h4>
+                    <ul class="space-y-2 text-xs text-brand-muted">
+                        <li><a href="#about" class="hover:text-brand-gold transition duration-200">Our Story & Philosophy</a></li>
+                        <li><a href="#menu" class="hover:text-brand-gold transition duration-200">Seasonal Gastronomy Menu</a></li>
+                        <li><a href="#chefs" class="hover:text-brand-gold transition duration-200">Our Culinary Artists</a></li>
+                        <li><a href="#testimonials" class="hover:text-brand-gold transition duration-200">Guest Experience Reviews</a></li>
+                        <li><a href="#location" class="hover:text-brand-gold transition duration-200">Contact, Location, Map</a></li>
+                    </ul>
+                </div>
+
+                <!-- Featured Foods Mention -->
+                <div class="space-y-4">
+                    <h4 class="font-serif text-base font-bold text-white tracking-wider">Celestial Highlights</h4>
+                    <ul class="space-y-2 text-xs text-brand-muted">
+                        <li><a href="#menu" class="hover:text-brand-gold transition duration-200">Crispy Truffle Burrata</a></li>
+                        <li><a href="#menu" class="hover:text-brand-gold transition duration-200">Pan Seared Diver Scallops</a></li>
+                        <li><a href="#menu" class="hover:text-brand-gold transition duration-200">A5 Japanese Wagyu Ribeye</a></li>
+                        <li><a href="#menu" class="hover:text-brand-gold transition duration-200">Ora King Salmon Platter</a></li>
+                        <li><a href="#menu" class="hover:text-brand-gold transition duration-200">Golden Soufflé with 24k Gold</a></li>
+                    </ul>
+                </div>
+
+                <!-- Newsletter -->
+                <div class="space-y-4">
+                    <h4 class="font-serif text-base font-bold text-white tracking-wider">The Inner Circle</h4>
+                    <p class="text-xs text-brand-muted leading-relaxed font-light">
+                        Subscribe to get early invitations to VIP tasting dinners, seasonal menu debuts, and wine masterclasses.
+                    </p>
+                    <form @submit.prevent="reservationStatus = 'Thank you for subscribing! Keep an eye on your inbox.'; showReservationModal = true;" class="flex mt-2">
+                        <input type="email" placeholder="Your Email Address" required class="flex-1 bg-brand-clay border border-white/10 px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-gold rounded-l-sm">
+                        <button type="submit" class="bg-brand-gold hover:bg-brand-goldDark text-brand-charcoal px-4 font-bold text-xs uppercase tracking-widest rounded-r-sm transition duration-300">
+                            Join
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Bottom Bar -->
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between text-[11px] text-brand-muted">
+                <p>&copy; 2026 Heavenly Food Restaurant. All rights reserved.</p>
+                <div class="flex space-x-6 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-white transition">Privacy Policy</a>
+                    <a href="#" class="hover:text-white transition">Terms & Conditions</a>
+                    <a href="#" class="hover:text-white transition">Sitemap</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive Online Reservation Modal -->
+    <div x-show="showReservationModal" 
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto"
+         style="display: none;">
+        
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black/80 transition-opacity" @click="showReservationModal = false; reservationStatus = ''"></div>
+
+        <!-- Modal Box -->
+        <div class="relative bg-brand-charcoal border border-white/10 w-full max-w-lg p-6 sm:p-8 rounded-xl z-10 shadow-2xl max-h-[90vh] overflow-y-auto">
+            
+            <!-- Close Button -->
+            <button @click="showReservationModal = false; reservationStatus = ''" class="absolute top-4 right-4 text-brand-muted hover:text-white text-xl p-2 focus:outline-none" aria-label="Close modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Conditional State: Form vs Success Message -->
+            <div x-show="!reservationStatus">
+                <div class="text-center space-y-2 mb-6">
+                    <span class="text-brand-gold font-semibold uppercase tracking-widest text-xs font-sans">Reservations</span>
+                    <h3 class="font-serif text-2xl sm:text-3xl font-bold text-white">Reserve Your Sanctuary</h3>
+                    <p class="text-xs text-brand-muted">Select your details to request an exclusive fine dining seating.</p>
+                </div>
+
+                <!-- Form -->
+                <form @submit.prevent="reservationStatus = 'success'" class="space-y-4">
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-brand-gold mb-1.5">Full Name</label>
+                        <input type="text" required class="w-full bg-brand-clay border border-white/10 rounded-sm px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-gold transition duration-200" placeholder="e.g. Christian Blanc">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Email -->
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-brand-gold mb-1.5">Email Address</label>
+                            <input type="email" required class="w-full bg-brand-clay border border-white/10 rounded-sm px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-gold transition duration-200" placeholder="yourname@gmail.com">
+                        </div>
+                        <!-- Phone -->
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-brand-gold mb-1.5">Phone Number</label>
+                            <input type="tel" required class="w-full bg-brand-clay border border-white/10 rounded-sm px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-gold transition duration-200" placeholder="+1 (555) 000-0000">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <!-- Date -->
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-brand-gold mb-1.5">Date</label>
+                            <input type="date" required class="w-full bg-brand-clay border border-white/10 rounded-sm px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-gold transition duration-200">
+                        </div>
+                        <!-- Time -->
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-brand-gold mb-1.5">Time Slot</label>
+                            <select required class="w-full bg-brand-clay border border-white/10 rounded-sm px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-gold transition duration-200">
+                                <option value="">Select Time</option>
+                                <option value="11:30">11:30 AM (Lunch)</option>
+                                <option value="13:00">01:00 PM (Lunch)</option>
+                                <option value="17:00">05:00 PM (Dinner)</option>
+                                <option value="18:30">06:30 PM (Dinner)</option>
+                                <option value="20:00">08:00 PM (Dinner)</option>
+                                <option value="21:30">09:30 PM (Dinner)</option>
+                            </select>
+                        </div>
+                        <!-- Guests Count -->
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-brand-gold mb-1.5">Guests</label>
+                            <select required class="w-full bg-brand-clay border border-white/10 rounded-sm px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-gold transition duration-200">
+                                <option value="1">1 Person</option>
+                                <option value="2" selected>2 Guests</option>
+                                <option value="3">3 Guests</option>
+                                <option value="4">4 Guests</option>
+                                <option value="5">5 Guests</option>
+                                <option value="6">6+ Guests (Event)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Special Occasions / Notes -->
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-brand-gold mb-1.5">Dietary Notes & Occasions</label>
+                        <textarea rows="2" class="w-full bg-brand-clay border border-white/10 rounded-sm px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-gold transition duration-200" placeholder="Allergies, Birthday, Anniversary, or special table preferences..."></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-2">
+                        <button type="submit" class="w-full py-4 bg-brand-gold hover:bg-brand-goldDark text-brand-charcoal font-bold tracking-widest text-xs uppercase transition duration-300 rounded-sm">
+                            Submit Seating Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success Response Box -->
+            <div x-show="reservationStatus === 'success'" class="text-center py-8 space-y-6">
+                <div class="w-16 h-16 bg-brand-gold/10 border border-brand-gold rounded-full flex items-center justify-center mx-auto text-brand-gold text-2xl">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="font-serif text-2xl font-bold text-white">Your Seat Awaits!</h3>
+                    <p class="text-sm text-brand-muted leading-relaxed px-4">
+                        We have received your reservation request. A confirmation email and SMS containing your digital table pass has been dispatched to your address.
+                    </p>
+                </div>
+                <div class="bg-brand-clay/50 border border-white/5 p-4 rounded text-xs text-brand-gold max-w-sm mx-auto">
+                    <span class="block text-white font-bold mb-1">Remember Your Code:</span>
+                    <span class="text-lg font-mono font-bold tracking-widest">HFN-8280-VIP</span>
+                </div>
+                <button @click="showReservationModal = false; reservationStatus = ''" class="px-6 py-2.5 bg-brand-gold hover:bg-brand-goldDark text-brand-charcoal font-semibold text-xs uppercase tracking-wider rounded-sm transition">
+                    Done
+                </button>
+            </div>
+
+            <!-- Custom text feedback from newsletter -->
+            <div x-show="reservationStatus && reservationStatus !== 'success'" class="text-center py-8 space-y-6">
+                <div class="w-16 h-16 bg-brand-gold/10 border border-brand-gold rounded-full flex items-center justify-center mx-auto text-brand-gold text-2xl">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="font-serif text-2xl font-bold text-white">Subscribed!</h3>
+                    <p class="text-sm text-brand-muted leading-relaxed px-4" x-text="reservationStatus"></p>
+                </div>
+                <button @click="showReservationModal = false; reservationStatus = ''" class="px-6 py-2.5 bg-brand-gold hover:bg-brand-goldDark text-brand-charcoal font-semibold text-xs uppercase tracking-wider rounded-sm transition">
+                    Done
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
